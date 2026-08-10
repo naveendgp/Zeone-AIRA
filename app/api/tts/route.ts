@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { record } from "../../_lib/analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,7 +91,11 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       // 401/402 (bad key, free-plan voice) shouldn't kill the call — fall back to the browser.
-      console.warn("[tts] elevenlabs", res.status, (await res.text()).slice(0, 160));
+      const detail = (await res.text()).slice(0, 160);
+      console.warn("[tts] elevenlabs", res.status, detail);
+      // A 401 here almost always means the monthly credits ran out; without this you'd only
+      // learn about it from a friend saying "the voice stopped working".
+      await record({ sid: "server", type: "error", where: "tts", status: res.status, detail });
       return new Response(null, { status: 204 });
     }
 
@@ -103,6 +108,7 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     console.warn("[tts] failed:", (e as Error).message);
+    await record({ sid: "server", type: "error", where: "tts", detail: (e as Error).message.slice(0, 200) });
     return new Response(null, { status: 204 });
   }
 }

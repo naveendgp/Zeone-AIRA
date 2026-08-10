@@ -15,6 +15,8 @@ export const maxDuration = 30;
  * English terms in English inside Tamil speech. It needs whisper_server.py running:
  *     ./venv/bin/python whisper_server.py
  */
+import { record } from "../../_lib/analytics";
+
 const PROVIDER = (process.env.STT_PROVIDER ?? "whisper").toLowerCase();
 const WHISPER_URL = process.env.WHISPER_URL ?? "http://127.0.0.1:8123/transcribe";
 const SARVAM_MODEL = process.env.SARVAM_STT_MODEL ?? "saarika:v2.5";
@@ -101,12 +103,14 @@ export async function POST(req: Request) {
     const out = PROVIDER === "sarvam"
       ? await viaSarvam(audio, type, lang)
       : await viaWhisper(await audio.arrayBuffer(), type, lang, prompt);
+    await record({ sid: "server", type: "voice", ok: true, engine: out.engine, text: out.text });
     return Response.json(out);
   } catch (e) {
     const msg = (e as Error).message;
     console.warn("[stt]", msg);
     // A dead sidecar is the likeliest failure — say so plainly instead of "stt_error".
     const down = PROVIDER !== "sarvam" && /fetch failed|ECONNREFUSED|timeout/i.test(msg);
+    await record({ sid: "server", type: "error", where: "stt", provider: PROVIDER, detail: msg.slice(0, 200) });
     return Response.json(
       { error: down ? "whisper_offline" : "stt_failed", detail: msg.slice(0, 200) },
       { status: down ? 503 : 502 }

@@ -21,6 +21,7 @@ import { Faqs } from "./_components/steps/Faqs";
 import { Review } from "./_components/steps/Review";
 import { Generating } from "./_components/Generating";
 import { Demo } from "./_components/demo/Demo";
+import { track } from "./_lib/track";
 
 const STORAGE_KEY = "zeone.onboarding.v2";
 
@@ -76,6 +77,7 @@ export default function StartPage() {
       /* corrupt or unavailable storage — start clean */
     }
     setRestored(true);
+    track("session");
   }, [form]);
 
   const values = useWatch({ control: form.control }) as Draft;
@@ -113,7 +115,11 @@ export default function StartPage() {
       const ok = await form.trigger(meta.fields);
       if (!ok) return;
     }
-    if (isLast) { setPhase("generating"); return; }
+    if (isLast) {
+      track("generated", { draft: form.getValues() });
+      setPhase("generating");
+      return;
+    }
     go(idx + 1);
   }, [meta, isLast, form, idx, go]);
 
@@ -185,6 +191,13 @@ export default function StartPage() {
   }, [next, phase]);
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [idx, phase]);
+
+  // Step arrivals are what make the drop-off funnel possible: the last step a session
+  // reports is the step it abandoned.
+  useEffect(() => {
+    if (phase !== "form" || !restored) return;
+    track("step", { key: meta.key, index: idx, total: visible.length });
+  }, [meta.key, idx, visible.length, phase, restored]);
 
   if (!restored) return <div className="min-h-screen" />;
   if (phase === "generating") return <Generating who={who} onDone={() => setPhase("demo")} />;

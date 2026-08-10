@@ -1,6 +1,7 @@
 import { draftSchema } from "../../start/_lib/schema";
 import { buildFactSheet, verify } from "../../start/_lib/factsheet";
 import { answer as localAnswer } from "../../start/_lib/engine";
+import { record } from "../../_lib/analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,9 +40,11 @@ interface Body {
   draft: unknown;
   messages?: { role: "caller" | "assistant"; text: string }[];
   question: string;
+  sid?: string;
 }
 
 export async function POST(req: Request) {
+  const t0 = Date.now();
   let body: Body;
   try {
     body = (await req.json()) as Body;
@@ -60,8 +63,15 @@ export async function POST(req: Request) {
 
   // No key, throttled, or Gemini unhappy -> the deterministic engine still answers.
   // The demo must never show a dead assistant just because a network call failed.
-  const fallback = (why: string) => {
+  const sid = typeof body.sid === "string" ? body.sid.slice(0, 40) : "anon";
+
+  const fallback = async (why: string) => {
     const a = localAnswer(draft, question);
+    await record({
+      sid, type: "ask", question,
+      answer: a.text, confidence: a.confidence, engine: "local", note: why,
+      business: draft.name, category: draft.type, ms: Date.now() - t0,
+    });
     return Response.json({ ...a, engine: "local", note: why });
   };
 
@@ -79,6 +89,7 @@ export async function POST(req: Request) {
 
   let raw = "";
   let lastErr = "";
+  let usedModel = ""; // which model in the chain actually answered — worth knowing per reply
   for (const model of MODELS) {
     try {
       const res = await fetch(`${BASE}chat/completions`, {
@@ -100,6 +111,7 @@ export async function POST(req: Request) {
       const content: string = data?.choices?.[0]?.message?.content ?? "";
       if (!content.trim()) { lastErr = `empty content (${model})`; continue; }
       raw = content;
+      usedModel = model;
       break;
     } catch (e) {
       lastErr = (e as Error).name === "TimeoutError" ? `timeout (${model})` : `error (${model})`;
@@ -124,6 +136,11 @@ export async function POST(req: Request) {
 
     // The badge reflects OUR check of the cited fact, not the model's self-assessment.
     const { confidence, source } = verify(out.used, refs);
+    await record({
+      sid, type: "ask", question,
+      answer: text, confidence, source, engine: "gemini", model: usedModel,
+      business: draft.name, category: draft.type, ms: Date.now() - t0,
+    });
     return Response.json({ text, confidence, source, engine: "gemini" });
   } catch {
     return fallback("could not read the model's reply");

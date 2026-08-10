@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { answer as localAnswer, type Confidence } from "../../_lib/engine";
 import type { Draft } from "../../_lib/schema";
+import { sessionId } from "../../_lib/track";
 
 export interface Turn {
   id: string;
@@ -40,7 +41,7 @@ export function useConversation(draft: Draft) {
         const res = await fetch("/api/demo-chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ draft, question: q, messages: historyRef.current.slice(-8) }),
+          body: JSON.stringify({ draft, question: q, messages: historyRef.current.slice(-8), sid: sessionId() }),
         });
         if (!res.ok) throw new Error(String(res.status));
         payload = await res.json();
