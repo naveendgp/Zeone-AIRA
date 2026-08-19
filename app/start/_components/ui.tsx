@@ -224,3 +224,19 @@ export function EnterHint() {
     </span>
   );
 }
+
+/**
+ * Heading for a block nested inside a step.
+ *
+ * Steps were merged to shorten the flow, which made these sections easy to scroll past —
+ * they were 11px uppercase ghost-grey, indistinguishable from a caption. Same weight and
+ * size as a real question now, with a rule above to separate it from the block before.
+ */
+export function Section({ title, hint }: { title: React.ReactNode; hint?: React.ReactNode }) {
+  return (
+    <div className="mb-4 mt-10 border-t border-line pt-8">
+      <h2 className="text-[19px] font-bold leading-snug tracking-[-0.02em] text-ink">{title}</h2>
+      {hint && <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-dim">{hint}</p>}
+    </div>
+  );
+}

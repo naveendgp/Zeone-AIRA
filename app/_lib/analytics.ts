@@ -30,6 +30,7 @@ export type EventType =
   | "ask"          // asked the assistant something
   | "voice"        // a spoken turn, or a speech failure
   | "provision"
+  | "order"        // someone asked to buy — v0 captures intent, payment is sent by hand
   | "error";
 
 export interface ZeoneEvent {

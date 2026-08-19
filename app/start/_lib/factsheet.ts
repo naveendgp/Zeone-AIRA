@@ -21,7 +21,14 @@ export interface FactSheet {
   refs: Map<string, string>;
 }
 
-const money = (p?: string) => (p?.trim() ? `₹${p.trim()}` : "price not set");
+/**
+ * A fixed price, or what the price depends on. "price not set" is a last resort: it makes
+ * the assistant sound like it has forgotten something the owner deliberately left open.
+ */
+const money = (price?: string, note?: string) =>
+  price?.trim() ? `₹${price.trim()}`
+  : note?.trim() ? `no fixed price — ${note.trim()}`
+  : "price not set";
 
 export function buildFactSheet(draft: Draft): FactSheet {
   const preset = draft.type ? PRESETS[draft.type] : PRESETS.clinic;
@@ -50,7 +57,7 @@ export function buildFactSheet(draft: Draft): FactSheet {
   if (draft.website?.trim()) add("website", "Contact details", `Website: ${draft.website.trim()}`);
 
   (draft.services ?? []).filter((s) => s.name?.trim()).forEach((s, i) => {
-    add(`service:${i}`, `Service — ${s.name.trim()}`, `Service: ${s.name.trim()} — ${money(s.price)}`);
+    add(`service:${i}`, `Service — ${s.name.trim()}`, `Service: ${s.name.trim()} — ${money(s.price, s.priceNote)}`);
   });
 
   (draft.staff ?? []).filter((s) => s.name?.trim()).forEach((s, i) => {

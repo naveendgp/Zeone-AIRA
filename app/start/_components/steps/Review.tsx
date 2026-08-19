@@ -72,7 +72,7 @@ export function Review({ onJump }: { onJump: (key: string) => void }) {
       <div className="divide-y divide-line">
         <Row
           label="Business"
-          onEdit={() => onJump("name")}
+          onEdit={() => onJump("business")}
           value={
             <>
               <span className="font-medium text-ink">{draft.name || "—"}</span>
@@ -93,7 +93,7 @@ export function Review({ onJump }: { onJump: (key: string) => void }) {
         {preset.staffNoun && (
           <Row
             label={preset.staffNoun + "s"}
-            onEdit={() => onJump("staff")}
+            onEdit={() => onJump("hours")}
             value={
               staff.length ? (
                 <div className="flex flex-wrap gap-1.5">
@@ -119,7 +119,7 @@ export function Review({ onJump }: { onJump: (key: string) => void }) {
         />
         <Row
           label="Policies"
-          onEdit={() => onJump("policies")}
+          onEdit={() => onJump("services")}
           value={
             onPolicies.length ? (
               <div className="flex flex-wrap gap-1.5">

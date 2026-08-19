@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { record } from "../../_lib/analytics";
+import { speakable } from "../../_lib/speakable";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,7 +57,9 @@ export async function POST(req: Request) {
   let text = "";
   try {
     const body = (await req.json()) as { text?: string };
-    text = (body.text ?? "").trim().slice(0, MAX_CHARS);
+    // Normalise before anything else: the cache key, the length cap and the bytes we send
+    // must all describe the text that is actually spoken.
+    text = speakable((body.text ?? "").trim()).slice(0, MAX_CHARS);
   } catch {
     return Response.json({ error: "Expected JSON { text }" }, { status: 400 });
   }

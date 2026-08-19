@@ -56,7 +56,7 @@ export interface AgentConfig {
   close_time: string;
   slot_minutes: number;
   staff: { name: string; specialty: string; fee: number | null; hours: string; available_days: string; name_en: string }[];
-  services: { name: string; price: number | null; needs_staff: boolean; name_en: string }[];
+  services: { name: string; price: number | null; price_note: string | null; needs_staff: boolean; name_en: string }[];
   service_synonyms: Record<string, string[]>;
   policies: Record<string, string>;
   about: string;
@@ -86,6 +86,8 @@ export function toAgentConfig(draft: Draft): AgentConfig {
     .map((s) => ({
       name: s.name.trim(),
       price: s.price?.trim() ? Number(s.price.replace(/[^\d.]/g, "")) || null : null,
+      // Spoken instead of a rupee figure when there is no fixed number.
+      price_note: s.priceNote?.trim() || null,
       needs_staff: NEEDS_STAFF.test(s.name) && (draft.staff ?? []).some((x) => x.name?.trim()),
       name_en: s.name.trim(),
     }));

@@ -26,7 +26,10 @@ function shape(events: ZeoneEvent[]) {
   const errors: ZeoneEvent[] = [];
 
   // Oldest first, so "deepest step" and "last seen" build up naturally.
+  const orders: ZeoneEvent[] = [];
+
   for (const e of [...events].reverse()) {
+    if (e.type === "order") { orders.unshift(e); continue; } // newest first
     if (e.type === "error") { errors.push(e); continue; }
     if (e.sid === "server") continue; // server-side voice events aren't tied to a visitor
 
@@ -66,6 +69,7 @@ function shape(events: ZeoneEvent[]) {
 
   return {
     sessions: list,
+    orders,
     errors: errors.slice(0, 40),
     asks,
     totals: {
@@ -117,7 +121,7 @@ export default async function AdminPage() {
     );
   }
 
-  const { sessions, errors, asks, totals, funnel } = shape(await readEvents());
+  const { sessions, orders, errors, asks, totals, funnel } = shape(await readEvents());
 
   return (
     <main className="mx-auto max-w-[1000px] px-6 py-12">
@@ -127,6 +131,49 @@ export default async function AdminPage() {
           Newest first · last {sessions.length} sessions kept
         </p>
       </header>
+
+      {orders.length > 0 && (
+        <section className="mb-8 rounded-2xl border border-brand/30 bg-brand-soft/40 p-5">
+          <h2 className="mb-4 text-[11px] uppercase tracking-[0.14em] text-brand">
+            Waiting for a payment link ({orders.length})
+          </h2>
+          <div className="space-y-2">
+            {orders.map((o, i) => (
+              <div key={i} className="rounded-xl border border-brand/20 bg-white p-4">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="font-mono text-[12px] font-bold text-brand">{String(o.ref)}</span>
+                  <span className="text-[14.5px] font-bold text-ink">{String(o.business)}</span>
+                  <span className="text-[13px] text-ink-dim">{String(o.owner)}</span>
+                  <span className="ml-auto text-[13px] font-semibold tabular-nums text-ink">
+                    {o.price ? `₹${Number(o.price).toLocaleString("en-IN")}` : "Custom"}
+                    <span className="ml-1.5 font-normal text-ink-ghost">{String(o.planName)}</span>
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-ink-soft">
+                  <a
+                    href={`https://wa.me/91${String(o.whatsapp)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-brand underline-offset-4 hover:underline"
+                  >
+                    WhatsApp +91 {String(o.whatsapp)}
+                  </a>
+                  {o.businessPhone ? <span>Answer: {String(o.businessPhone)}</span> : null}
+                  {o.email ? <span>{String(o.email)}</span> : null}
+                  {o.gstin ? <span>GSTIN {String(o.gstin)}</span> : null}
+                  {o.city ? <span className="text-ink-ghost">{String(o.city)}</span> : null}
+                  <span className="ml-auto tabular-nums text-ink-faint">{when(o.t)}</span>
+                </div>
+                {o.base ? (
+                  <p className="mt-1.5 text-[11.5px] text-ink-faint">
+                    Invoice: ₹{Number(o.base).toLocaleString("en-IN")} + ₹{Number(o.gst).toLocaleString("en-IN")} GST
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="people opened it" value={totals.sessions} />

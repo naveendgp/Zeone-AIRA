@@ -4,7 +4,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Draft, PolicyKey } from "../../_lib/schema";
 import { PRESETS, POLICY_META } from "../../_lib/presets";
-import { Ask, InputSm, Toggle } from "../ui";
+import { InputSm, Section, Toggle } from "../ui";
 
 export function Policies() {
   const { control, register, setValue } = useFormContext<Draft>();
@@ -15,9 +15,9 @@ export function Policies() {
 
   return (
     <>
-      <Ask
+      <Section
         title="Which of these do you have?"
-        hint="Tap the ones that apply. Anything you leave off, Zeone will politely say you don't offer."
+        hint="Tap the ones that apply. Anything you leave off, Zeone will politely tell callers you don't offer it."
       />
 
       <div className="flex flex-wrap gap-2.5">

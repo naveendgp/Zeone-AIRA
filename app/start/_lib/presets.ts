@@ -115,7 +115,7 @@ export const PRESETS: Record<BusinessType, Preset> = {
       { name: "Personal training", price: "5000" },
       { name: "Trial day pass", price: "200" },
     ],
-    sampleFaq: { q: "Is there a trial session?", a: "Yes, a one day trial pass for ₹200." },
+    sampleFaq: { q: "Is there a trial session?", a: "Yes, a one-day trial pass for ₹200." },
     policyOrder: ["parking", "card", "wheelchair", "insurance", "homeCollection", "emergency"],
   },
   service: {
@@ -155,9 +155,9 @@ export const PRESETS: Record<BusinessType, Preset> = {
 export const FALLBACK_PRESET: Preset = PRESETS.clinic;
 
 export const POLICY_META: Record<PolicyKey, { label: string; hint: string; icon: LucideIcon }> = {
-  parking: { label: "Parking", hint: "Two wheeler and car parking available", icon: Car },
+  parking: { label: "Parking", hint: "Two-wheeler and car parking available", icon: Car },
   card: { label: "Card payment", hint: "Cards and UPI accepted", icon: Building2 },
-  wheelchair: { label: "Wheelchair access", hint: "Ramp and ground floor access", icon: HeartPulse },
+  wheelchair: { label: "Wheelchair access", hint: "Ramp and ground-floor access", icon: HeartPulse },
   insurance: { label: "Insurance", hint: "Which insurers you accept", icon: Building2 },
   homeCollection: { label: "Home collection", hint: "We collect samples at home", icon: Store },
   emergency: { label: "Emergency service", hint: "After hours or urgent help", icon: HeartPulse },
@@ -232,7 +232,7 @@ export const SAMPLES: Partial<Record<BusinessType, SampleFill>> = {
     policies: ["parking", "card"],
     faqs: [
       { q: "Does a root canal need more than one visit?", a: "Usually two visits, about a week apart." },
-      { q: "Do you do EMI for braces?", a: "Yes, we offer 3 and 6 month EMI on treatments above ₹15,000." },
+      { q: "Do you do EMI for braces?", a: "Yes, we offer EMI over 3 or 6 months on treatments above ₹15,000." },
     ],
   },
   salon: {
@@ -264,7 +264,7 @@ export const SAMPLES: Partial<Record<BusinessType, SampleFill>> = {
     staff: [],
     policies: ["card", "parking", "homeCollection"],
     faqs: [
-      { q: "Can I return an item?", a: "Yes, within 7 days with the bill, unused and in original packing." },
+      { q: "Can I return an item?", a: "Yes, within 7 days with the bill, unused and in original packaging." },
       { q: "Do you deliver?", a: "Free home delivery within 5 km on orders above ₹1,000." },
     ],
   },
@@ -275,7 +275,7 @@ export const SAMPLES: Partial<Record<BusinessType, SampleFill>> = {
     policies: ["card", "parking"],
     faqs: [
       { q: "How long does a screen replacement take?", a: "About two hours if the part is in stock." },
-      { q: "Is there a warranty on repairs?", a: "Yes, 3 months warranty on all parts we replace." },
+      { q: "Is there a warranty on repairs?", a: "Yes, 3 months' warranty on all parts we replace." },
     ],
   },
   gym: {
@@ -287,7 +287,7 @@ export const SAMPLES: Partial<Record<BusinessType, SampleFill>> = {
     ],
     policies: ["parking", "card"],
     faqs: [
-      { q: "Is there a trial session?", a: "Yes, a one day trial pass for ₹200, adjustable against membership." },
+      { q: "Is there a trial session?", a: "Yes, a one-day trial pass for ₹200, adjustable against membership." },
       { q: "What are your peak hours?", a: "6–9 AM and 6–9 PM are busiest. Afternoons are quiet." },
     ],
   },
@@ -394,7 +394,7 @@ export const CATEGORY_QUESTIONS: Record<BusinessType, CategoryQuestion[]> = {
   gym: [
     { id: "monthlyFee", ask: "How much is the monthly membership fee?", placeholder: "₹1,500 a month" },
     { id: "womenTimings", ask: "Do you have separate timings for women?", placeholder: "Yes, 11 AM–1 PM" },
-    { id: "trialSession", ask: "Can I try a trial session before joining?", placeholder: "Yes, one day pass ₹200" },
+    { id: "trialSession", ask: "Can I try a trial session before joining?", placeholder: "Yes, one-day pass ₹200" },
     { id: "personalTrainers", ask: "Do you have personal trainers?", placeholder: "Yes, ₹5,000 a month" },
     { id: "open6am", ask: "Are you open at 6 AM?", placeholder: "Yes, we open 5:30 AM" },
   ],
@@ -443,7 +443,7 @@ export const SAMPLE_PROFILES: Partial<Record<BusinessType, Record<string, string
     roomBooking: "Yes, call a day ahead and we'll hold a room",
   },
   dental: {
-    bracesCost: "From ₹25,000, with 3 and 6 month EMI",
+    bracesCost: "From ₹25,000, with EMI over 3 or 6 months",
     rootCanalAppointment: "Yes — usually two visits about a week apart",
     cleaningCost: "₹1,200",
     childCheckup: "Yes, we see children from age 3",
@@ -473,14 +473,14 @@ export const SAMPLE_PROFILES: Partial<Record<BusinessType, Record<string, string
   mobile: {
     iphoneStock: "Both usually in stock — call to confirm the colour",
     exchangeOldPhone: "Yes, value depends on the condition",
-    emi: "Yes, 3, 6 and 9 month EMI on most cards",
+    emi: "Yes, EMI over 3, 6 or 9 months on most cards",
     currentOffer: "Bank card discounts — they change weekly",
     screenReplacementCost: "From ₹2,500 depending on the model",
   },
   gym: {
     monthlyFee: "₹1,500 a month",
     womenTimings: "Yes, 11 AM–1 PM is women only",
-    trialSession: "Yes, a one day trial pass for ₹200",
+    trialSession: "Yes, a one-day trial pass for ₹200",
     personalTrainers: "Yes, personal training is ₹5,000 a month",
     open6am: "Yes, we open at 5:30 AM",
   },

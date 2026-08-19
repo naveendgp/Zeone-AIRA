@@ -40,6 +40,15 @@ export const serviceSchema = z.object({
   id: z.string(),
   name: z.string().trim().min(1, "Service name is required"),
   price: z.string().optional(),
+  /**
+   * What to say when there is no fixed number — "depends on the design", "today's gold
+   * rate, call and we'll tell you". Spoken instead of a rupee figure.
+   *
+   * A blank price used to be the only way to express this, and a blank price is exactly
+   * what nobody can answer: the assistant would say it had no information about a service
+   * the owner had just listed.
+   */
+  priceNote: z.string().optional(),
 });
 
 export const faqSchema = z.object({

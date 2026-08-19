@@ -25,12 +25,12 @@ export function Faqs() {
           both become grounded FAQs the assistant is allowed to answer from. */}
       <Profile />
 
-      <div className="mb-3 mt-8 flex items-center justify-between gap-3">
-        <p className="text-[11px] uppercase tracking-[0.14em] text-ink-ghost">
-          Anything else people ask
-        </p>
+      <div className="mb-3 mt-10 flex items-end justify-between gap-3 border-t border-line pt-8">
+        <h2 className="text-[19px] font-bold tracking-[-0.02em] text-ink">
+          Anything else people ask?
+        </h2>
         {fields.length > 0 && (
-          <span className="text-[11.5px] tabular-nums text-ink-ghost">{fields.length} added</span>
+          <span className="text-[12px] tabular-nums text-ink-faint">{fields.length} added</span>
         )}
       </div>
 

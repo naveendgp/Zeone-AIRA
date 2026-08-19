@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
+
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, BookOpen, CalendarCheck, MessageSquare, Pencil, Phone, RotateCcw } from "lucide-react";
+import { ArrowRight, BookOpen, MessageCircle, MessageSquare, Pencil, Phone, RotateCcw } from "lucide-react";
 import type { Draft } from "../../_lib/schema";
 import { coverage, knowledgeCount } from "../../_lib/engine";
 import { Button, Eyebrow, cn } from "../ui";
@@ -11,6 +13,7 @@ import { Voice } from "./Voice";
 import { Knowledge } from "./Knowledge";
 import { useConversation } from "./useConversation";
 import { Provision } from "./Provision";
+import { WHATSAPP } from "../../../_lib/contact";
 
 const TABS = [
   { key: "voice", label: "Voice call", icon: Phone },
@@ -192,16 +195,26 @@ export function Demo({ draft, who, onEdit }: { draft: Draft; who: string; onEdit
           Your customers keep calling the same number. {who} picks up — nights, Sundays, and while
           you&apos;re with a customer.
         </p>
+        {/* Both of these did nothing when clicked — at the one moment someone has just
+            heard their own receptionist work and is reaching for the buy button. */}
         <div className="mt-7 flex flex-wrap gap-3">
-          <Button size="lg">
+          <Link
+            href="/pricing"
+            className="inline-flex h-[52px] items-center gap-2 rounded-xl bg-brand px-7 text-[14.5px] font-bold text-white shadow-[0_10px_20px_#6d4ed82e] transition-colors hover:bg-brand-hover"
+          >
             <Phone className="h-[18px] w-[18px]" />
-            Connect my phone number
-          </Button>
-          <Button variant="outline" size="lg">
-            <CalendarCheck className="h-[18px] w-[18px]" />
-            Book a live demo
+            Put {who} on my phone number
+          </Link>
+          <a
+            href={WHATSAPP}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-[52px] items-center gap-2 rounded-xl border border-line-strong bg-white px-7 text-[14.5px] font-bold text-ink transition-colors hover:border-brand/40 hover:text-brand"
+          >
+            <MessageCircle className="h-[18px] w-[18px]" />
+            Ask us a question
             <ArrowRight className="h-4 w-4" />
-          </Button>
+          </a>
         </div>
       </motion.div>
     </div>

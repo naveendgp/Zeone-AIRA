@@ -3,10 +3,66 @@
 import { useEffect, useRef } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, Sparkles, X } from "lucide-react";
+import { Plus, Sparkles, Tag, X } from "lucide-react";
 import { uid, type Draft } from "../../_lib/schema";
 import { PRESETS } from "../../_lib/presets";
-import { Ask, InputSm } from "../ui";
+import { Ask, InputSm, cn } from "../ui";
+import { Policies } from "./Policies";
+
+/**
+ * A rupee amount, or — for anything that genuinely has no fixed price — a short note about
+ * what it depends on. Gold rates move daily, tailoring depends on the design, and a service
+ * centre cannot quote before it sees the vehicle.
+ */
+function PriceField({ index, noun }: { index: number; noun: string }) {
+  const { control, register, setValue } = useFormContext<Draft>();
+  const note = useWatch({ control, name: `services.${index}.priceNote` });
+  const varies = typeof note === "string" && note.length > 0;
+
+  const toggle = () => {
+    if (varies) {
+      setValue(`services.${index}.priceNote`, "", { shouldDirty: true });
+    } else {
+      // A single space marks "varies" before anything is typed — an empty string is
+      // indistinguishable from the fixed-price mode.
+      setValue(`services.${index}.priceNote`, " ", { shouldDirty: true });
+      setValue(`services.${index}.price`, "", { shouldDirty: true });
+    }
+  };
+
+  return (
+    <div className={cn("relative shrink-0", varies ? "w-[232px]" : "w-[124px]")}>
+      <button
+        type="button"
+        onClick={toggle}
+        title={varies ? "Set a fixed price instead" : "No fixed price? Say what it depends on"}
+        aria-label={varies ? "Use a fixed price" : "Price varies"}
+        className={cn(
+          "absolute left-0 top-0 z-10 flex h-9 w-8 items-center justify-center rounded-l-xl text-[14.5px] transition-colors",
+          varies ? "text-brand hover:text-brand-hover" : "text-ink-ghost hover:text-brand"
+        )}
+      >
+        {varies ? <Tag className="h-[15px] w-[15px]" /> : "₹"}
+      </button>
+      {varies ? (
+        <InputSm
+          {...register(`services.${index}.priceNote`)}
+          placeholder="Depends on the design"
+          className="pl-8"
+          aria-label={`${noun} ${index + 1} — what the price depends on`}
+        />
+      ) : (
+        <InputSm
+          {...register(`services.${index}.price`)}
+          placeholder="Price"
+          inputMode="numeric"
+          className="pl-8 tabular-nums"
+          aria-label={`${noun} ${index + 1} price`}
+        />
+      )}
+    </div>
+  );
+}
 
 export function Services() {
   const { control, register, formState: { errors } } = useFormContext<Draft>();
@@ -21,7 +77,7 @@ export function Services() {
   useEffect(() => {
     if (seeded.current) return;
     seeded.current = true;
-    if (fields.length === 0) append({ id: uid(), name: "", price: "" }, { shouldFocus: false });
+    if (fields.length === 0) append({ id: uid(), name: "", price: "", priceNote: "" }, { shouldFocus: false });
   }, [fields.length, append]);
 
   // Unconditional — short-circuiting a useWatch() call would break the rules of hooks.
@@ -32,7 +88,7 @@ export function Services() {
     <>
       <Ask
         title="What do you offer, and what does it cost?"
-        hint="The price you set here is the only price Zeone will ever quote. Leave it blank if it varies."
+        hint="The price you set here is the only price Zeone will ever quote. If a price isn't fixed, tap ₹ to say what it depends on instead."
       />
 
       <div className="space-y-2">
@@ -53,16 +109,7 @@ export function Services() {
                 className="flex-1"
                 aria-label={`${preset.serviceNoun} ${i + 1} name`}
               />
-              <div className="relative w-[124px] shrink-0">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[14.5px] text-ink-ghost">₹</span>
-                <InputSm
-                  {...register(`services.${i}.price`)}
-                  placeholder="Price"
-                  inputMode="numeric"
-                  className="pl-8 tabular-nums"
-                  aria-label={`${preset.serviceNoun} ${i + 1} price`}
-                />
-              </div>
+              <PriceField index={i} noun={preset.serviceNoun} />
               <button
                 type="button"
                 onClick={() => remove(i)}
@@ -79,7 +126,7 @@ export function Services() {
       {/* Always available — never hide the only way to satisfy a required field. */}
       <button
         type="button"
-        onClick={() => append({ id: uid(), name: "", price: "" })}
+        onClick={() => append({ id: uid(), name: "", price: "", priceNote: "" })}
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-line py-3.5 text-[13.5px] text-ink-faint transition-colors hover:border-line-strong hover:text-ink"
       >
         <Plus className="h-4 w-4" />
@@ -101,6 +148,7 @@ export function Services() {
       {errors.services && (
         <p className="mt-3 text-[13px] text-rose-600">{errors.services.message ?? "Add at least one"}</p>
       )}
+      <Policies />
     </>
   );
 }

@@ -80,12 +80,12 @@ export function Profile() {
 
   return (
     <>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-[11px] uppercase tracking-[0.14em] text-ink-ghost">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <h2 className="text-[15px] font-bold tracking-[-0.01em] text-ink">
           Common {label} questions
-        </p>
-        <span className="text-[11.5px] tabular-nums text-ink-ghost">
-          {answered}/{questions.length}
+        </h2>
+        <span className="text-[12px] tabular-nums text-ink-faint">
+          {answered}/{questions.length} answered
         </span>
       </div>
 

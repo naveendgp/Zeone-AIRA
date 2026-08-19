@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Plus, X } from "lucide-react";
 import { uid, type Draft } from "../../_lib/schema";
 import { PRESETS } from "../../_lib/presets";
-import { Ask, InputSm, Label } from "../ui";
+import { InputSm, Label, Section } from "../ui";
 
 export function Staff() {
   const { control, register } = useFormContext<Draft>();
@@ -20,9 +20,11 @@ export function Staff() {
 
   return (
     <>
-      <Ask
-        title={`Who should callers be able to ask for?`}
-        hint={`Zeone reads these names out when someone asks who's available. You can add more later.`}
+      {/* A section of the hours step now: "when are you open" and "who can they ask for"
+          are the same question to a caller. */}
+      <Section
+        title="Who can callers ask for?"
+        hint={`Zeone reads these names out when someone asks who's available. Optional — add more later.`}
       />
 
       <div className="space-y-2.5">
