@@ -72,7 +72,7 @@ export async function POST(req: Request) {
   const hit = CACHE.get(hash);
   if (hit) {
     return new Response(hit, {
-      headers: { "Content-Type": "audio/mpeg", "X-Zeone-Cache": "hit", "Cache-Control": "no-store" },
+      headers: { "Content-Type": "audio/mpeg", "X-Frontline-Cache": "hit", "Cache-Control": "no-store" },
     });
   }
 
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
     CACHE.set(hash, buf);
 
     return new Response(buf, {
-      headers: { "Content-Type": "audio/mpeg", "X-Zeone-Cache": "miss", "Cache-Control": "no-store" },
+      headers: { "Content-Type": "audio/mpeg", "X-Frontline-Cache": "miss", "Cache-Control": "no-store" },
     });
   } catch (e) {
     console.warn("[tts] failed:", (e as Error).message);

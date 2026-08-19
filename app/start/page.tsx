@@ -91,7 +91,7 @@ export default function StartPage() {
   const idx = Math.min(step, visible.length - 1);
   const meta = visible[idx];
   const isLast = idx === visible.length - 1;
-  const who = assistantNameFor(values?.type, values?.name || "Zeone");
+  const who = assistantNameFor(values?.type, values?.name || "Frontline");
 
   const go = useCallback((n: number) => { setDir(n > idx ? 1 : -1); setStep(n); }, [idx]);
 

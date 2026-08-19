@@ -67,7 +67,7 @@ export function Hours() {
     <>
       <Ask
         title="When are you open?"
-        hint="Zeone refuses to book anything outside these hours, so callers never turn up at a closed door."
+        hint="Frontline refuses to book anything outside these hours, so callers never turn up at a closed door."
       />
 
       <button

@@ -164,15 +164,17 @@ export const POLICY_META: Record<PolicyKey, { label: string; hint: string; icon:
 };
 
 /** Deterministic pick so the same business always gets the same assistant. */
-/** Every Zeone receptionist is AIRA — one name customers learn to recognise. */
-export const ASSISTANT_NAME = "AIRA";
-
 /**
- * The spoken form. Tamil TTS reads all-caps Latin inside a Tamil sentence letter by letter
- * ("ay-eye-aar-ay"), so anything the assistant says aloud uses the Tamil spelling — matching
- * the convention already in profiles/*.json (பிரியா, தீபா). "AIRA" stays the written name.
+ * The receptionist has a person's name, not the product's.
+ *
+ * A caller expects "Priya speaking", not a brand introducing itself — and Frontline is what
+ * the owner buys, not who the customer talks to. Keeping them separate also means the
+ * product can be renamed without every caller hearing something different.
  */
-export const ASSISTANT_NAME_TA = "ஐரா";
+export const ASSISTANT_NAME = "Priya";
+
+/** The spoken form. Tamil TTS reads Latin inside a Tamil sentence badly; this is what it says. */
+export const ASSISTANT_NAME_TA = "பிரியா";
 
 export function assistantNameFor(_type?: BusinessType, _businessName?: string): string {
   return ASSISTANT_NAME;

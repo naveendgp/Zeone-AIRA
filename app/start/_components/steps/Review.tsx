@@ -31,7 +31,7 @@ export function Review({ onJump }: { onJump: (key: string) => void }) {
   const { control } = useFormContext<Draft>();
   const draft = useWatch({ control }) as Draft;
   const preset = draft.type ? PRESETS[draft.type] : PRESETS.clinic;
-  const who = assistantNameFor(draft.type, draft.name || "Zeone");
+  const who = assistantNameFor(draft.type, draft.name || "Frontline");
 
   const services = (draft.services ?? []).filter((s) => s.name?.trim());
   const staff = (draft.staff ?? []).filter((s) => s.name?.trim());

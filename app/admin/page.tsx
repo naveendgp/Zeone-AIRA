@@ -1,8 +1,8 @@
-import { readEvents, analyticsEnabled, type ZeoneEvent } from "../_lib/analytics";
+import { readEvents, analyticsEnabled, type FrontlineEvent } from "../_lib/analytics";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const metadata = { title: "Zeone — testing dashboard" };
+export const metadata = { title: "Frontline — testing dashboard" };
 
 /* ------------------------------ shaping ---------------------------------- */
 
@@ -18,15 +18,15 @@ interface Session {
   deepest: string;
   finished: boolean;
   draft?: Record<string, unknown>;
-  asks: ZeoneEvent[];
+  asks: FrontlineEvent[];
 }
 
-function shape(events: ZeoneEvent[]) {
+function shape(events: FrontlineEvent[]) {
   const sessions = new Map<string, Session>();
-  const errors: ZeoneEvent[] = [];
+  const errors: FrontlineEvent[] = [];
 
   // Oldest first, so "deepest step" and "last seen" build up naturally.
-  const orders: ZeoneEvent[] = [];
+  const orders: FrontlineEvent[] = [];
 
   for (const e of [...events].reverse()) {
     if (e.type === "order") { orders.unshift(e); continue; } // newest first

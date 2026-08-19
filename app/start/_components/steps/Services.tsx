@@ -88,7 +88,7 @@ export function Services() {
     <>
       <Ask
         title="What do you offer, and what does it cost?"
-        hint="The price you set here is the only price Zeone will ever quote. If a price isn't fixed, tap ₹ to say what it depends on instead."
+        hint="The price you set here is the only price Frontline will ever quote. If a price isn't fixed, tap ₹ to say what it depends on instead."
       />
 
       <div className="space-y-2">

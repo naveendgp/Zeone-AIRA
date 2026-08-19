@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { planById, PLANS } from "../_lib/plans";
 import { OrderForm } from "./OrderForm";
 
-export const metadata = { title: "Zeone — get started" };
+export const metadata = { title: "Frontline — get started" };
 
 export default async function OrderPage({
   searchParams,

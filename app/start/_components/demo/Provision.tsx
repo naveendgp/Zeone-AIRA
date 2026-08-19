@@ -66,7 +66,7 @@ export function Provision({ draft, who }: { draft: Draft; who: string }) {
           <p className="mt-1.5 text-[13px] leading-relaxed text-ink-dim">
             {state === "done"
               ? "Everything above has been written to your agent's config. Start the agent and it will answer calls with exactly these facts."
-              : "This sends everything you just set up to the Zeone voice agent on this machine — the one that does Tamil speech, checks the calendar and writes bookings to your dashboard."}
+              : "This sends everything you just set up to the Frontline voice agent on this machine — the one that does Tamil speech, checks the calendar and writes bookings to your dashboard."}
           </p>
 
           {state !== "done" && (

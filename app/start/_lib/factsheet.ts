@@ -32,7 +32,7 @@ const money = (price?: string, note?: string) =>
 
 export function buildFactSheet(draft: Draft): FactSheet {
   const preset = draft.type ? PRESETS[draft.type] : PRESETS.clinic;
-  const who = assistantNameFor(draft.type, draft.name || "Zeone");
+  const who = assistantNameFor(draft.type, draft.name || "Frontline");
   const refs = new Map<string, string>();
   const lines: string[] = [];
 

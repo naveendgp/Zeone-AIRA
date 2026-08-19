@@ -33,7 +33,7 @@ export type EventType =
   | "order"        // someone asked to buy — v0 captures intent, payment is sent by hand
   | "error";
 
-export interface ZeoneEvent {
+export interface FrontlineEvent {
   t: number;
   sid: string;
   type: EventType;
@@ -53,7 +53,7 @@ async function redis(command: unknown[]): Promise<unknown> {
 }
 
 /** Fire-and-mostly-forget. Awaited (serverless kills stray promises) but never throws. */
-export async function record(ev: Omit<ZeoneEvent, "t">): Promise<void> {
+export async function record(ev: Omit<FrontlineEvent, "t">): Promise<void> {
   if (!analyticsEnabled) return;
   try {
     const payload = JSON.stringify({ ...ev, t: Date.now() });
@@ -74,16 +74,16 @@ export async function record(ev: Omit<ZeoneEvent, "t">): Promise<void> {
 }
 
 /** Newest first. Returns [] rather than throwing, so the dashboard always renders. */
-export async function readEvents(limit = MAX_EVENTS): Promise<ZeoneEvent[]> {
+export async function readEvents(limit = MAX_EVENTS): Promise<FrontlineEvent[]> {
   if (!analyticsEnabled) return [];
   try {
     const rows = (await redis(["LRANGE", KEY, 0, limit - 1])) as string[];
     return rows
-      .map((r) => { try { return JSON.parse(r) as ZeoneEvent; } catch { return null; } })
+      .map((r) => { try { return JSON.parse(r) as FrontlineEvent; } catch { return null; } })
       // A row missing its timestamp or session would render as "Invalid Date" and skew the
       // counts. Truncated writes and older event shapes are both real possibilities, so
       // drop anything that isn't a well-formed event rather than trusting the store.
-      .filter((e): e is ZeoneEvent =>
+      .filter((e): e is FrontlineEvent =>
         !!e && typeof e === "object" &&
         typeof e.t === "number" && Number.isFinite(e.t) &&
         typeof e.sid === "string" && typeof e.type === "string");

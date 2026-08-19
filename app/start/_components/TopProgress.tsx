@@ -34,9 +34,9 @@ export function TopProgress({
         ) : (
           <Link href="/" className="flex items-center gap-2 text-[19px] font-extrabold tracking-[-1px] text-ink">
             <span className="grid h-[27px] w-[27px] place-items-center rounded-[9px] bg-brand font-display text-[15px] font-bold italic text-white shadow-[0_5px_13px_#7254ef55]">
-              Z
+              F
             </span>
-            zeone
+            frontline
           </Link>
         )}
 

@@ -11,5 +11,5 @@ const RAW = (process.env.NEXT_PUBLIC_WHATSAPP ?? "").replace(/\D/g, "");
 export const HAS_WHATSAPP = RAW.length >= 10;
 
 export const WHATSAPP = HAS_WHATSAPP
-  ? `https://wa.me/${RAW}?text=${encodeURIComponent("Hi, I saw Zeone and want to know more.")}`
+  ? `https://wa.me/${RAW}?text=${encodeURIComponent("Hi, I saw Frontline and want to know more.")}`
   : "/pricing";

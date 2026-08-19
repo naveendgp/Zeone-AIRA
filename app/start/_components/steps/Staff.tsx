@@ -24,7 +24,7 @@ export function Staff() {
           are the same question to a caller. */}
       <Section
         title="Who can callers ask for?"
-        hint={`Zeone reads these names out when someone asks who's available. Optional — add more later.`}
+        hint={`Frontline reads these names out when someone asks who's available. Optional — add more later.`}
       />
 
       <div className="space-y-2.5">

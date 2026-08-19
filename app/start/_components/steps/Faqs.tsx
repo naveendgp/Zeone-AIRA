@@ -18,7 +18,7 @@ export function Faqs() {
     <>
       <Ask
         title="What do people ask you every single day?"
-        hint="Answer in your own words — this is exactly what Zeone says back, so these take priority over everything else it knows."
+        hint="Answer in your own words — this is exactly what Frontline says back, so these take priority over everything else it knows."
       />
 
       {/* The ones we can guess for this trade, then anything we couldn't. Same destination:
@@ -63,7 +63,7 @@ export function Faqs() {
                   <InputSm {...register(`faqs.${i}.q`)} placeholder={preset.sampleFaq.q} />
                 </div>
                 <div>
-                  <Label>Zeone answers</Label>
+                  <Label>Frontline answers</Label>
                   <Textarea {...register(`faqs.${i}.a`)} placeholder={preset.sampleFaq.a} />
                 </div>
               </div>

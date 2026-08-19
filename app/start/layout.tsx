@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Create your AI Front Desk — Zeone",
+  title: "Create your AI Front Desk — Frontline",
   description: "Set up your own AI receptionist in about two minutes, then talk to it.",
 };
 

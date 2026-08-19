@@ -121,7 +121,7 @@ export function toAgentConfig(draft: Draft): AgentConfig {
   const serviceList = services.slice(0, 6).map((s) => s.name).join(", ");
 
   return {
-    business_name: draft.name?.trim() || "Zeone Business",
+    business_name: draft.name?.trim() || "Frontline Business",
     assistant_name: ASSISTANT_NAME_TA,
     business_type: label,
     area,
@@ -168,7 +168,7 @@ export function toAgentConfig(draft: Draft): AgentConfig {
           keywords: faqKeywords(q.ask),
         })),
     ],
-    _generated_by: `zeone onboarding /start — ${new Date().toISOString()}`,
+    _generated_by: `frontline onboarding /start — ${new Date().toISOString()}`,
   };
 }
 

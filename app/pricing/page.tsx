@@ -3,8 +3,8 @@ import { Check, Mic } from "lucide-react";
 import { PLANS, rupees } from "../_lib/plans";
 
 export const metadata = {
-  title: "Zeone pricing — from ₹2,999/month",
-  description: "A receptionist costs ₹18,000 and goes home at 7. Zeone answers every call, in Tamil, all night.",
+  title: "Frontline pricing — from ₹2,999/month",
+  description: "A receptionist costs ₹18,000 and goes home at 7. Frontline answers every call, in Tamil, all night.",
 };
 
 export default function PricingPage() {
@@ -13,9 +13,9 @@ export default function PricingPage() {
       <header className="mb-12 text-center">
         <Link href="/" className="mb-8 inline-flex items-center gap-2 text-[19px] font-extrabold tracking-[-1px] text-ink">
           <span className="grid h-[27px] w-[27px] place-items-center rounded-[9px] bg-brand font-display text-[15px] font-bold italic text-white shadow-[0_5px_13px_#7254ef55]">
-            Z
+            F
           </span>
-          zeone
+          frontline
         </Link>
         <h1 className="text-[34px] font-extrabold leading-[1.08] tracking-[-0.035em] text-ink sm:text-[46px]">
           A receptionist costs ₹18,000
@@ -23,7 +23,7 @@ export default function PricingPage() {
           <em className="font-display font-semibold italic text-brand-hover">and goes home at 7.</em>
         </h1>
         <p className="mx-auto mt-5 max-w-lg text-[15.5px] leading-relaxed text-ink-dim">
-          Zeone answers every call — nights, Sundays, and while you&apos;re with a customer.
+          Frontline answers every call — nights, Sundays, and while you&apos;re with a customer.
           All prices include GST. No setup fee, cancel any time.
         </p>
       </header>

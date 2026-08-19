@@ -17,7 +17,7 @@ export function Policies() {
     <>
       <Section
         title="Which of these do you have?"
-        hint="Tap the ones that apply. Anything you leave off, Zeone will politely tell callers you don't offer it."
+        hint="Tap the ones that apply. Anything you leave off, Frontline will politely tell callers you don't offer it."
       />
 
       <div className="flex flex-wrap gap-2.5">
