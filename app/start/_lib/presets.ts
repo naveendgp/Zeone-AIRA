@@ -165,16 +165,16 @@ export const POLICY_META: Record<PolicyKey, { label: string; hint: string; icon:
 
 /** Deterministic pick so the same business always gets the same assistant. */
 /**
- * The receptionist has a person's name, not the product's.
+ * The receptionist's name, kept separate from the product name.
  *
- * A caller expects "Priya speaking", not a brand introducing itself — and Frontline is what
- * the owner buys, not who the customer talks to. Keeping them separate also means the
- * product can be renamed without every caller hearing something different.
+ * A caller expects "Aira speaking", not a brand introducing itself — Frontline is what the
+ * owner buys, Aira is who the customer talks to. Written as "Aira" rather than "AIRA"
+ * because all-caps reads as an initialism, to people and to text-to-speech alike.
  */
-export const ASSISTANT_NAME = "Priya";
+export const ASSISTANT_NAME = "Aira";
 
 /** The spoken form. Tamil TTS reads Latin inside a Tamil sentence badly; this is what it says. */
-export const ASSISTANT_NAME_TA = "பிரியா";
+export const ASSISTANT_NAME_TA = "ஐரா";
 
 export function assistantNameFor(_type?: BusinessType, _businessName?: string): string {
   return ASSISTANT_NAME;
