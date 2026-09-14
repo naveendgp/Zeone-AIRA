@@ -3,65 +3,96 @@
 import { useEffect, useRef } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, Sparkles, Tag, X } from "lucide-react";
+import { Plus, Sparkles, X } from "lucide-react";
 import { uid, type Draft } from "../../_lib/schema";
 import { PRESETS } from "../../_lib/presets";
 import { Ask, InputSm, Section, cn } from "../ui";
 import { Policies } from "./Policies";
 
 /**
- * A rupee amount, or — for anything that genuinely has no fixed price — a short note about
- * what it depends on. Gold rates move daily, tailoring depends on the design, and a service
- * centre cannot quote before it sees the vehicle.
+ * One service: a name, and either a rupee amount or — for anything that genuinely has no
+ * fixed price — what it depends on. Gold rates move daily, tailoring depends on the design,
+ * an audit depends on the size of the books.
+ *
+ * The choice is spelled out as two visible options. It used to hide behind a tap on the ₹
+ * sign, which nobody discovered, so owners with no fixed prices thought they had to invent one.
  */
-function PriceField({ index, noun, highlight = false }: { index: number; noun: string; highlight?: boolean }) {
+function ServiceRow({ index, noun, highlight, onRemove }: {
+  index: number; noun: string; highlight: boolean; onRemove: () => void;
+}) {
   const { control, register, setValue } = useFormContext<Draft>();
   const note = useWatch({ control, name: `services.${index}.priceNote` });
-  const varies = typeof note === "string" && note.length > 0;
   const name = useWatch({ control, name: `services.${index}.name` });
   const price = useWatch({ control, name: `services.${index}.price` });
+  // A single space marks "varies" before anything is typed — an empty string is
+  // indistinguishable from the fixed-price mode. Trimmed away before it reaches the agent.
+  const varies = typeof note === "string" && note.length > 0;
   // Auto-filled services usually arrive without a price — that is the one gap to point at.
   const missing = highlight && !varies && !!name?.trim() && !price?.trim();
 
-  const toggle = () => {
-    if (varies) {
-      setValue(`services.${index}.priceNote`, "", { shouldDirty: true });
-    } else {
-      // A single space marks "varies" before anything is typed — an empty string is
-      // indistinguishable from the fixed-price mode.
+  const setMode = (toVaries: boolean) => {
+    if (toVaries === varies) return;
+    if (toVaries) {
       setValue(`services.${index}.priceNote`, " ", { shouldDirty: true });
       setValue(`services.${index}.price`, "", { shouldDirty: true });
+    } else {
+      setValue(`services.${index}.priceNote`, "", { shouldDirty: true });
     }
   };
 
+  const option = (active: boolean) =>
+    cn(
+      "rounded-full px-2.5 py-1 text-[12px] font-semibold transition-colors",
+      active ? "bg-brand-soft text-brand" : "text-ink-faint hover:text-ink"
+    );
+
   return (
-    <div className={cn("relative shrink-0", varies ? "w-[232px]" : "w-[124px]")}>
-      <button
-        type="button"
-        onClick={toggle}
-        title={varies ? "Set a fixed price instead" : "No fixed price? Say what it depends on"}
-        aria-label={varies ? "Use a fixed price" : "Price varies"}
-        className={cn(
-          "absolute left-0 top-0 z-10 flex h-9 w-8 items-center justify-center rounded-l-xl text-[14.5px] transition-colors",
-          varies ? "text-brand hover:text-brand-hover" : "text-ink-ghost hover:text-brand"
+    <div className="rounded-2xl border border-line bg-white/60 p-2.5">
+      <div className="flex items-center gap-2">
+        <InputSm
+          {...register(`services.${index}.name`)}
+          placeholder={`${noun} name`}
+          className="flex-1"
+          aria-label={`${noun} ${index + 1} name`}
+        />
+        {!varies && (
+          <div className="relative w-[124px] shrink-0">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[14.5px] text-ink-ghost">₹</span>
+            <InputSm
+              {...register(`services.${index}.price`)}
+              placeholder={missing ? "Add price" : "Optional"}
+              inputMode="numeric"
+              className={cn("pl-7 tabular-nums", missing && "border-amber-300 bg-amber-50/70")}
+              aria-label={`${noun} ${index + 1} price`}
+            />
+          </div>
         )}
-      >
-        {varies ? <Tag className="h-[15px] w-[15px]" /> : "₹"}
-      </button>
-      {varies ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove ${noun} ${index + 1}`}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-ghost transition-colors hover:bg-black/[0.04] hover:text-rose-600"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="mt-2 flex items-center gap-1 pl-1" role="radiogroup" aria-label={`${noun} ${index + 1} pricing`}>
+        <button type="button" role="radio" aria-checked={!varies} onClick={() => setMode(false)} className={option(!varies)}>
+          Fixed price
+        </button>
+        <button type="button" role="radio" aria-checked={varies} onClick={() => setMode(true)} className={option(varies)}>
+          Price varies
+        </button>
+      </div>
+
+      {varies && (
         <InputSm
           {...register(`services.${index}.priceNote`)}
-          placeholder="Depends on the design"
-          className="pl-8"
+          autoFocus={!note?.trim()}
+          placeholder="What does it depend on? e.g. the size of the job"
+          className="mt-2"
           aria-label={`${noun} ${index + 1} — what the price depends on`}
-        />
-      ) : (
-        <InputSm
-          {...register(`services.${index}.price`)}
-          placeholder={missing ? "Add price" : "Price"}
-          inputMode="numeric"
-          className={cn("pl-8 tabular-nums", missing && "border-amber-300 bg-amber-50/70")}
-          aria-label={`${noun} ${index + 1} price`}
         />
       )}
     </div>
@@ -69,15 +100,14 @@ function PriceField({ index, noun, highlight = false }: { index: number; noun: s
 }
 
 export function Services({ embedded = false }: { embedded?: boolean } = {}) {
-  const { control, register, formState: { errors } } = useFormContext<Draft>();
+  const { control, formState: { errors } } = useFormContext<Draft>();
   const type = useWatch({ control, name: "type" });
   const preset = type ? PRESETS[type] : PRESETS.clinic;
   const { fields, append, remove, replace } = useFieldArray({ control, name: "services" });
   const seeded = useRef(false);
 
-  // Open with one empty row. Without it the step showed a heading, a "add at least one"
-  // error and no inputs — and for "Something else" (no template) there was no way at all
-  // to satisfy a required field.
+  // Open with one empty row. Without it the step showed a heading and no inputs, and for
+  // "Something else" (no template) nothing to start from.
   useEffect(() => {
     if (seeded.current) return;
     seeded.current = true;
@@ -88,9 +118,13 @@ export function Services({ embedded = false }: { embedded?: boolean } = {}) {
   const firstName = useWatch({ control, name: "services.0.name" });
   const onlyBlank = fields.length === 0 || (fields.length === 1 && !firstName?.trim());
 
+  const title = "What do you offer, and what does it cost?";
+  const hint =
+    "Frontline only ever quotes the prices you add here. No fixed price? Choose “Price varies” and say what it depends on — or leave the price empty and callers are told your team will confirm it.";
+
   return (
     <>
-      {embedded ? (<Section title="What do you offer, and what does it cost?" hint="The price you set here is the only price Frontline will ever quote. If a price isn't fixed, tap ₹ to say what it depends on instead." />) : (<Ask title="What do you offer, and what does it cost?" hint="The price you set here is the only price Frontline will ever quote. If a price isn't fixed, tap ₹ to say what it depends on instead." />)}
+      {embedded ? <Section title={title} hint={hint} /> : <Ask title={title} hint={hint} />}
 
       <div className="space-y-2">
         <AnimatePresence initial={false}>
@@ -102,29 +136,13 @@ export function Services({ embedded = false }: { embedded?: boolean } = {}) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center gap-2"
             >
-              <InputSm
-                {...register(`services.${i}.name`)}
-                placeholder={`${preset.serviceNoun} name`}
-                className="flex-1"
-                aria-label={`${preset.serviceNoun} ${i + 1} name`}
-              />
-              <PriceField index={i} noun={preset.serviceNoun} highlight={embedded} />
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                aria-label={`Remove ${preset.serviceNoun} ${i + 1}`}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-ghost transition-colors hover:bg-black/[0.04] hover:text-rose-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <ServiceRow index={i} noun={preset.serviceNoun} highlight={embedded} onRemove={() => remove(i)} />
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      {/* Always available — never hide the only way to satisfy a required field. */}
       <button
         type="button"
         onClick={() => append({ id: uid(), name: "", price: "", priceNote: "" })}
@@ -147,7 +165,7 @@ export function Services({ embedded = false }: { embedded?: boolean } = {}) {
       )}
 
       {errors.services && (
-        <p className="mt-3 text-[13px] text-rose-600">{errors.services.message ?? "Add at least one"}</p>
+        <p className="mt-3 text-[13px] text-rose-600">{errors.services.message ?? "Check your services"}</p>
       )}
       <Policies />
     </>
