@@ -220,18 +220,35 @@ export default function StartPage() {
     void runEnrich(p);
   }, [form, runEnrich]);
 
-  const goManual = useCallback(() => {
-    form.setValue("setupMode", "manual");
+  /** Manual setup; whatever they typed in the search box becomes the business name. */
+  const goManual = useCallback((typedName?: string) => {
+    const name = typedName?.trim();
+    const current = form.getValues();
+    // a new name means a new business: don't carry an old draft's details into it
+    const base = name && current.name?.trim() && current.name.trim() !== name ? emptyDraft() : current;
+    form.reset({ ...base, setupMode: "manual", placeId: undefined, name: name || base.name });
     setDir(1);
     setStep(1);
   }, [form]);
 
-  /** Load the ready-made business for this niche and jump to the summary. */
-  const useSample = useCallback((fallbackType?: BusinessType) => {
-    const current = form.getValues();
-    const t = (current.type ?? fallbackType) as BusinessType | undefined;
-    const sample = t ? SAMPLES[t] : undefined;
-    if (!t || !sample) return;
+  /** Throw away a remembered half-finished setup. */
+  const startOver = useCallback(() => {
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* storage unavailable */ }
+    enrichFor.current = null;
+    setEnrich({ status: "idle" });
+    form.reset(emptyDraft());
+  }, [form]);
+
+  /**
+   * Load a ready-made business and jump to the summary.
+   * `fresh` ignores any remembered draft ("Just show me"); otherwise the sample fills in
+   * around what they've already entered. Types without a sample (e.g. "other") use the clinic one.
+   */
+  const useSample = useCallback((fallbackType?: BusinessType, fresh = false) => {
+    const current = fresh ? emptyDraft() : form.getValues();
+    const wanted = (fresh ? fallbackType : current.type ?? fallbackType) as BusinessType | undefined;
+    const t: BusinessType = wanted && SAMPLES[wanted] && PRESETS[wanted] ? wanted : "clinic";
+    const sample = SAMPLES[t]!;
     const preset = PRESETS[t];
 
     form.reset({
@@ -317,9 +334,10 @@ export default function StartPage() {
                 <Find
                   onPlace={onPlace}
                   onManual={goManual}
-                  onSample={() => useSample("dental")}
+                  onSample={() => useSample("dental", true)}
                   resumeName={resumable ? values.name : undefined}
                   onResume={() => { setDir(1); setStep(1); }}
+                  onStartOver={startOver}
                 />
               )}
               {meta.key === "found" && <Found enrich={enrich} />}
