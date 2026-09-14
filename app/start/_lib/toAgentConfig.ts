@@ -161,7 +161,7 @@ export function toAgentConfig(draft: Draft): AgentConfig {
         .filter((f) => f.q?.trim() && f.a?.trim())
         .map((f) => ({ q: f.q.trim(), a: f.a.trim(), keywords: faqKeywords(f.q) })),
       ...questionsFor(draft)
-        .filter((q) => draft.profile?.[q.id]?.trim())
+        .filter((q) => draft.profile?.[q.id]?.trim() && !draft.suggested?.[`profile.${q.id}`])
         .map((q) => ({
           q: q.ask,
           a: draft.profile![q.id].trim(),

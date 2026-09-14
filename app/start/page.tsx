@@ -1,15 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 
-import { DAYS, draftSchema, emptyDraft, uid, type Draft, type PolicyKey } from "./_lib/schema";
-import { PRESETS, SAMPLES, SAMPLE_PROFILES, assistantNameFor } from "./_lib/presets";
+import { DAYS, draftSchema, emptyDraft, uid, type BusinessType, type Draft, type PolicyKey } from "./_lib/schema";
+import { PRESETS, SAMPLES, SAMPLE_PROFILES, assistantNameFor, questionsFor, typeLabel } from "./_lib/presets";
+import type { PlaceSummary } from "../_lib/places";
 import { Button, EnterHint, cn } from "./_components/ui";
 import { TopProgress } from "./_components/TopProgress";
+import { Find } from "./_components/steps/Find";
+import { Found, type EnrichState } from "./_components/steps/Found";
 import { Business } from "./_components/steps/Business";
 import { Hours } from "./_components/steps/Hours";
 import { Services } from "./_components/steps/Services";
@@ -27,20 +30,27 @@ interface Step {
   fields?: FieldPath<Draft>[];
   /** Optional steps get a Skip link and no validation. */
   skippable?: boolean;
-  /** Wording for the skip link — "Skip" alone is vague on a page full of questions. */
   skipLabel?: string;
-  /** Selecting an option IS the answer — no Continue button. */
+  /** The step advances itself (a pick, not a Continue button). */
   autoAdvance?: boolean;
-  /** Wider column for list-shaped steps. */
   wide?: boolean;
   cta?: string;
 }
 
-const STEPS: Step[] = [
-  // Five screens, down from ten. Name/category/address were three separate pages; hours and
-  // team are one question to a caller ("when, and who?"); services and facilities are the
-  // other ("what, and how much?"). The welcome splash asked nothing and the review screen
-  // showed exactly what the demo's Knowledge tab already shows.
+/**
+ * Three screens when the business is on Google Maps: find it, confirm what we found, answer
+ * what callers ask. The owner types almost nothing — the pick fills the business details,
+ * and the website and reviews fill services, staff and draft answers in the background.
+ */
+const MAPS_STEPS: Step[] = [
+  { key: "find", autoAdvance: true, wide: true },
+  { key: "found", fields: ["name", "type", "services"], wide: true },
+  { key: "faqs", wide: true, cta: "Create my AI receptionist" },
+];
+
+/** The typed flow, for businesses not on Google Maps. */
+const MANUAL_STEPS: Step[] = [
+  { key: "find", autoAdvance: true, wide: true },
   { key: "business", fields: ["name", "type"], wide: true },
   { key: "hours", wide: true },
   { key: "services", fields: ["services"], wide: true },
@@ -50,11 +60,20 @@ const STEPS: Step[] = [
 
 type Phase = "form" | "generating" | "demo";
 
+interface EnrichResponse {
+  services?: { name: string; price: string; priceNote: string; source: string }[];
+  staff?: { name: string; role: string; source: string }[];
+  answers?: { id: string; answer: string; source: string }[];
+  read?: { websiteChars: number };
+}
+
 export default function StartPage() {
   const [step, setStep] = useState(0);
   const [dir, setDir] = useState(1);
   const [phase, setPhase] = useState<Phase>("form");
   const [restored, setRestored] = useState(false);
+  const [enrich, setEnrich] = useState<EnrichState>({ status: "idle" });
+  const enrichFor = useRef<string | null>(null);
 
   const form = useForm<Draft>({
     resolver: zodResolver(draftSchema),
@@ -87,7 +106,7 @@ export default function StartPage() {
     return () => clearTimeout(t);
   }, [values, restored]);
 
-  const visible = STEPS;
+  const visible = values?.setupMode === "manual" ? MANUAL_STEPS : MAPS_STEPS;
   const idx = Math.min(step, visible.length - 1);
   const meta = visible[idx];
   const isLast = idx === visible.length - 1;
@@ -108,16 +127,118 @@ export default function StartPage() {
     go(idx + 1);
   }, [meta, isLast, form, idx, go]);
 
-  /** Load the ready-made business for this niche and skip to the summary. */
-  const useSample = useCallback(() => {
-    const t = form.getValues("type");
+  /**
+   * Read the website and reviews in the background while the owner looks at what Maps gave
+   * us. Results only fill what is still empty, so anything typed meanwhile is never
+   * overwritten, and drafted answers are marked as suggestions until confirmed.
+   */
+  const runEnrich = useCallback(async (p: PlaceSummary) => {
+    enrichFor.current = p.placeId;
+    setEnrich({ status: "loading", website: !!p.website });
+    try {
+      const questions = questionsFor({ type: p.type, generatedQuestions: [] }).map(({ id, ask }) => ({ id, ask }));
+      const res = await fetch("/api/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          website: p.website, reviews: p.reviews, name: p.name,
+          type: typeLabel(p.type, p.otherType), questions,
+        }),
+      });
+      const d = (await res.json()) as EnrichResponse;
+      if (enrichFor.current !== p.placeId) return; // they picked a different business meanwhile
+      if (!res.ok) { setEnrich({ status: "failed", website: !!p.website }); return; }
+
+      const cur = form.getValues();
+      const noServices = !(cur.services ?? []).some((s) => s.name?.trim());
+      const noStaff = !(cur.staff ?? []).some((s) => s.name?.trim());
+      const found = { services: noServices ? d.services ?? [] : [], staff: noStaff ? d.staff ?? [] : [] };
+
+      const profile = { ...(cur.profile ?? {}) };
+      const suggested = { ...(cur.suggested ?? {}) };
+      let answers = 0;
+      for (const a of d.answers ?? []) {
+        if (profile[a.id]?.trim()) continue;
+        profile[a.id] = a.answer;
+        suggested[`profile.${a.id}`] = a.source;
+        answers++;
+      }
+
+      // reset (not setValue) so the mounted field arrays pick up the new rows.
+      form.reset(
+        {
+          ...cur,
+          services: found.services.length
+            ? found.services.map((s) => ({ id: uid(), name: s.name, price: s.price, priceNote: s.priceNote, source: s.source }))
+            : cur.services,
+          staff: found.staff.length
+            ? found.staff.map((s) => ({ id: uid(), name: s.name, role: s.role, fee: "", hours: "", source: s.source }))
+            : cur.staff,
+          profile,
+          suggested,
+        },
+        { keepErrors: true, keepDirty: true, keepTouched: true }
+      );
+      setEnrich({
+        status: "done",
+        services: found.services.length, staff: found.staff.length, answers,
+        website: !!p.website, readWebsite: (d.read?.websiteChars ?? 0) > 200,
+      });
+    } catch {
+      if (enrichFor.current === p.placeId) setEnrich({ status: "failed", website: !!p.website });
+    }
+  }, [form]);
+
+  const onPlace = useCallback((p: PlaceSummary) => {
+    const current = form.getValues();
+    // A different business than last time: don't carry the old one's services and answers.
+    const base = current.placeId && current.placeId !== p.placeId ? emptyDraft() : current;
+    const policies = Object.fromEntries(
+      (Object.keys(base.policies) as PolicyKey[]).map((k) => [
+        k, { on: p.policies[k] ?? base.policies[k]?.on ?? false, note: base.policies[k]?.note ?? "" },
+      ])
+    ) as Draft["policies"];
+
+    form.reset({
+      ...base,
+      setupMode: "maps",
+      placeId: p.placeId,
+      name: p.name,
+      type: p.type,
+      otherType: p.otherType,
+      address: p.address,
+      phone: p.phone,
+      website: p.website,
+      rating: p.rating ?? undefined,
+      reviewCount: p.reviewCount ?? undefined,
+      hours: p.hours ?? base.hours,
+      policies,
+    });
+    track("step", { key: "picked", source: "maps", category: p.type });
+    setDir(1);
+    setStep(1);
+    void runEnrich(p);
+  }, [form, runEnrich]);
+
+  const goManual = useCallback(() => {
+    form.setValue("setupMode", "manual");
+    setDir(1);
+    setStep(1);
+  }, [form]);
+
+  /** Load the ready-made business for this niche and jump to the summary. */
+  const useSample = useCallback((fallbackType?: BusinessType) => {
+    const current = form.getValues();
+    const t = (current.type ?? fallbackType) as BusinessType | undefined;
     const sample = t ? SAMPLES[t] : undefined;
     if (!t || !sample) return;
     const preset = PRESETS[t];
-    const current = form.getValues();
 
     form.reset({
       ...current,
+      setupMode: "manual",
+      type: t,
+      name: current.name?.trim() || (t === "dental" ? "Anand Dental Care" : `My ${preset.label}`),
       address: current.address?.trim() || sample.address,
       phone: current.phone?.trim() || sample.phone,
       hours: Object.fromEntries(
@@ -132,12 +253,11 @@ export default function StartPage() {
       ) as Draft["policies"],
       faqs: sample.faqs.map((x) => ({ id: uid(), ...x })),
       profile: { ...(current.profile ?? {}), ...(SAMPLE_PROFILES[t] ?? {}) },
+      suggested: {},
     });
-
-    const reviewIdx = visible.findIndex((s) => s.key === "review");
-    if (reviewIdx >= 0) go(reviewIdx);
-  }, [form, visible, go]);
-
+    setDir(1);
+    setStep(MANUAL_STEPS.findIndex((s) => s.key === "review"));
+  }, [form]);
 
   const back = useCallback(() => idx > 0 && go(idx - 1), [idx, go]);
   const jumpTo = useCallback((key: string) => {
@@ -145,9 +265,9 @@ export default function StartPage() {
     if (i >= 0) go(i);
   }, [visible, go]);
 
-  // Enter advances; Shift+Enter and textareas are left alone.
+  // Enter advances; Shift+Enter, textareas and self-advancing steps are left alone.
   useEffect(() => {
-    if (phase !== "form") return;
+    if (phase !== "form" || meta.autoAdvance) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Enter" || e.shiftKey) return;
       const el = e.target as HTMLElement | null;
@@ -157,7 +277,7 @@ export default function StartPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [next, phase]);
+  }, [next, phase, meta.autoAdvance]);
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [idx, phase]);
 
@@ -171,8 +291,10 @@ export default function StartPage() {
   if (!restored) return <div className="min-h-screen" />;
   if (phase === "generating") return <Generating who={who} onDone={() => setPhase("demo")} />;
   if (phase === "demo") {
-    return <Demo draft={values} who={who} onEdit={() => { setPhase("form"); go(0); }} />;
+    return <Demo draft={values} who={who} onEdit={() => { setPhase("form"); go(1); }} />;
   }
+
+  const resumable = values?.name?.trim() && (values.placeId || values.setupMode === "manual");
 
   return (
     <FormProvider {...form}>
@@ -191,20 +313,28 @@ export default function StartPage() {
               exit={{ opacity: 0, x: dir * -24 }}
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             >
-              <>
-                {meta.key === "business" && <Business onUseSample={useSample} />}
-                {meta.key === "hours" && <Hours />}
-                {meta.key === "services" && <Services />}
-                {meta.key === "faqs" && <Faqs />}
-                {meta.key === "review" && <Review onJump={jumpTo} />}
-              </>
+              {meta.key === "find" && (
+                <Find
+                  onPlace={onPlace}
+                  onManual={goManual}
+                  onSample={() => useSample("dental")}
+                  resumeName={resumable ? values.name : undefined}
+                  onResume={() => { setDir(1); setStep(1); }}
+                />
+              )}
+              {meta.key === "found" && <Found enrich={enrich} />}
+              {meta.key === "business" && <Business onUseSample={() => useSample()} />}
+              {meta.key === "hours" && <Hours />}
+              {meta.key === "services" && <Services />}
+              {meta.key === "faqs" && <Faqs />}
+              {meta.key === "review" && <Review onJump={jumpTo} />}
             </motion.div>
           </AnimatePresence>
 
           {!meta.autoAdvance && (
             <div className="mt-10 flex items-center gap-4">
               <Button size="lg" onClick={next} className={isLast ? "" : "min-w-[132px]"}>
-                {isLast ? <><Sparkles className="h-[18px] w-[18px]" /> {meta.cta}</> : "Continue"}
+                {isLast ? <><Sparkles className="h-[18px] w-[18px]" /> {meta.cta}</> : meta.key === "found" ? "Looks right" : "Continue"}
                 {!isLast && <ArrowRight className="h-4 w-4" />}
               </Button>
 

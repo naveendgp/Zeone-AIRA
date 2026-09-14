@@ -5,7 +5,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Pencil } from "lucide-react";
 import { DAYS, type Draft } from "../../_lib/schema";
-import { Ask, Switch, cn } from "../ui";
+import { Ask, Section, Switch, cn } from "../ui";
 import { Staff } from "./Staff";
 
 /** "09:00" -> "9:00 AM", so the summary reads the way someone would say it out loud. */
@@ -46,7 +46,7 @@ function summarise(hours: Draft["hours"]): string {
   return closed.length ? `${when} · Closed ${closed.map(short).join(", ")}` : when;
 }
 
-export function Hours() {
+export function Hours({ embedded = false }: { embedded?: boolean } = {}) {
   const { control, setValue, register } = useFormContext<Draft>();
   const hours = useWatch({ control, name: "hours" }) as Draft["hours"];
   // Most shops match the 9–8, closed-Sunday default, so the seven-row grid is hidden until
@@ -65,10 +65,14 @@ export function Hours() {
 
   return (
     <>
-      <Ask
-        title="When are you open?"
-        hint="Frontline refuses to book anything outside these hours, so callers never turn up at a closed door."
-      />
+      {embedded ? (
+        <Section title="When are you open?" />
+      ) : (
+        <Ask
+          title="When are you open?"
+          hint="Frontline refuses to book anything outside these hours, so callers never turn up at a closed door."
+        />
+      )}
 
       <button
         type="button"
@@ -85,7 +89,7 @@ export function Hours() {
         <span className="min-w-0 flex-1">
           <span className="block text-[14.5px] font-semibold text-ink">{summarise(hours)}</span>
           <span className="mt-0.5 block text-[12.5px] text-ink-faint">
-            {editing ? "Set each day below" : "Looks right? Carry on. Tap to change."}
+            {editing ? "Set each day below" : "Tap to change a day"}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-1.5 text-[12.5px] font-semibold text-brand">

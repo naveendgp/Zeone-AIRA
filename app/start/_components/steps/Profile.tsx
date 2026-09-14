@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Check, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { MicButton } from "../MicButton";
 import type { Draft } from "../../_lib/schema";
 import { questionsFor, typeLabel } from "../../_lib/presets";
 import { InputSm, cn } from "../ui";
@@ -15,11 +16,19 @@ import { InputSm, cn } from "../ui";
  * splitting them across two screens only made the owner answer questions twice.
  */
 export function Profile() {
-  const { control, register, setValue } = useFormContext<Draft>();
+  const { control, register, setValue, getValues } = useFormContext<Draft>();
   const type = useWatch({ control, name: "type" });
   const otherType = useWatch({ control, name: "otherType" });
   const generated = useWatch({ control, name: "generatedQuestions" });
   const profile = (useWatch({ control, name: "profile" }) ?? {}) as Record<string, string>;
+  const suggested = (useWatch({ control, name: "suggested" }) ?? {}) as Record<string, string>;
+
+  /** The owner accepted (or rewrote) a drafted answer — from now on it is theirs. */
+  const confirm = (id: string) => {
+    const next = { ...(getValues("suggested") ?? {}) };
+    delete next[`profile.${id}`];
+    setValue("suggested", next, { shouldDirty: true });
+  };
 
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<string | null>(null);
@@ -64,7 +73,7 @@ export function Profile() {
   }, [type, otherType, setValue]);
 
   const regenerate = () => { askedFor.current = null; setValue("generatedQuestions", [], { shouldDirty: true }); };
-  const answered = questions.filter((q) => profile[q.id]?.trim()).length;
+  const answered = questions.filter((q) => profile[q.id]?.trim() && !suggested[`profile.${q.id}`]).length;
 
   if (loading && !questions.length) {
     return (
@@ -92,23 +101,52 @@ export function Profile() {
       <div className="space-y-2.5">
         {questions.map((q) => {
           const filled = !!profile[q.id]?.trim();
+          const draftFrom = suggested[`profile.${q.id}`];
+          const reg = register(`profile.${q.id}`);
           return (
             <div
               key={q.id}
               className={cn(
                 "rounded-2xl border p-4 transition-colors",
-                filled ? "border-brand/25 bg-brand-soft/40" : "border-line bg-white"
+                draftFrom ? "border-amber-300 bg-amber-50/50"
+                  : filled ? "border-brand/25 bg-brand-soft/40" : "border-line bg-white"
               )}
             >
               {/* The caller's words, in quotes — so the owner answers a person, not a form. */}
               <p className="mb-2.5 text-[13.5px] font-semibold text-ink">
                 &ldquo;{q.ask}&rdquo;
               </p>
-              <InputSm
-                {...register(`profile.${q.id}`)}
-                placeholder={q.placeholder ?? "Your answer…"}
-                aria-label={q.ask}
-              />
+              <div className="flex items-center gap-2">
+                <InputSm
+                  {...reg}
+                  onChange={(e) => { void reg.onChange(e); if (draftFrom) confirm(q.id); }}
+                  placeholder={q.placeholder ?? "Type or tap the mic…"}
+                  aria-label={q.ask}
+                  className="flex-1"
+                />
+                <MicButton
+                  onText={(t) => {
+                    const cur = (getValues(`profile.${q.id}`) ?? "").trim();
+                    setValue(`profile.${q.id}`, cur ? `${cur} ${t}` : t, { shouldDirty: true });
+                    if (draftFrom) confirm(q.id);
+                  }}
+                />
+              </div>
+              {draftFrom && (
+                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-[12px] text-amber-800">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Drafted from {draftFrom} — not used until you confirm
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => confirm(q.id)}
+                    className="flex items-center gap-1 rounded-lg border border-leaf-line bg-white px-2.5 py-1 text-[12px] font-bold text-leaf transition-colors hover:bg-leaf-soft"
+                  >
+                    <Check className="h-3.5 w-3.5" strokeWidth={3} /> Use this
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}

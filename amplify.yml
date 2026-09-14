@@ -1,0 +1,22 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm use 20
+        - npm ci
+    build:
+      commands:
+        # Amplify console variables exist only during the build. Server code (API routes,
+        # middleware) reads them at runtime, so they are written into .env.production first.
+        # Only the names the app uses are copied — never the build environment wholesale.
+        - env | grep -E '^(GEMINI_|ELEVEN_|ELEVENLABS_|SARVAM_|STT_|TTS_|DEMO_|UPSTASH_|KV_REST_|ADMIN_|GOOGLE_PLACES_API_KEY|ORDER_WEBHOOK_URL|NEXT_PUBLIC_)' >> .env.production || true
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - .next/cache/**/*
+      - node_modules/**/*

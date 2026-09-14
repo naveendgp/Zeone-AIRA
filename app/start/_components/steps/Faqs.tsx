@@ -7,9 +7,10 @@ import { uid, type Draft } from "../../_lib/schema";
 import { PRESETS } from "../../_lib/presets";
 import { Ask, InputSm, Label, Textarea } from "../ui";
 import { Profile } from "./Profile";
+import { MicButton } from "../MicButton";
 
 export function Faqs() {
-  const { control, register } = useFormContext<Draft>();
+  const { control, register, setValue, getValues } = useFormContext<Draft>();
   const type = useWatch({ control, name: "type" });
   const preset = type ? PRESETS[type] : PRESETS.clinic;
   const { fields, append, remove } = useFieldArray({ control, name: "faqs" });
@@ -64,7 +65,15 @@ export function Faqs() {
                 </div>
                 <div>
                   <Label>Frontline answers</Label>
-                  <Textarea {...register(`faqs.${i}.a`)} placeholder={preset.sampleFaq.a} />
+                  <div className="flex items-start gap-2">
+                    <Textarea {...register(`faqs.${i}.a`)} placeholder={preset.sampleFaq.a} />
+                    <MicButton
+                      onText={(t) => {
+                        const cur = (getValues(`faqs.${i}.a`) ?? "").trim();
+                        setValue(`faqs.${i}.a`, cur ? `${cur} ${t}` : t, { shouldDirty: true });
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </motion.div>

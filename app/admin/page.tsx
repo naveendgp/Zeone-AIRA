@@ -6,7 +6,7 @@ export const metadata = { title: "Frontline — testing dashboard" };
 
 /* ------------------------------ shaping ---------------------------------- */
 
-const STEP_ORDER = ["welcome", "name", "type", "contact", "hours", "staff", "services", "policies", "faqs", "review"];
+const STEP_ORDER = ["find", "found", "business", "hours", "services", "faqs", "review"];
 
 interface Session {
   sid: string;

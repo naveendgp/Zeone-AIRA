@@ -90,14 +90,18 @@ export async function POST(req: Request) {
   let raw = "";
   let lastErr = "";
   let usedModel = ""; // which model in the chain actually answered — worth knowing per reply
+  // Amplify cuts requests off at 30s; stop falling back to the next model before that.
+  const deadline = Date.now() + 22_000;
   for (const model of MODELS) {
+    const left = deadline - Date.now();
+    if (left < 2000) break;
     try {
       const res = await fetch(`${BASE}chat/completions`, {
         method: "POST",
         // The OpenAI-compatible endpoint wants Bearer. (x-goog-api-key is for the *native*
         // v1beta/models/...:generateContent endpoint and 400s here.)
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        signal: AbortSignal.timeout(12_000),
+        signal: AbortSignal.timeout(Math.min(12_000, left)),
         body: JSON.stringify({
           model,
           temperature: 0.3,

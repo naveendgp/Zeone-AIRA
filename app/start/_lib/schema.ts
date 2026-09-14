@@ -34,6 +34,8 @@ export const staffSchema = z.object({
   // kept as a string so the field can be empty while typing; parsed at the edges
   fee: z.string().optional(),
   hours: z.string().optional(),
+  /** Where an auto-filled row came from, e.g. "your website". Absent when typed. */
+  source: z.string().optional(),
 });
 
 export const serviceSchema = z.object({
@@ -49,6 +51,7 @@ export const serviceSchema = z.object({
    * the owner had just listed.
    */
   priceNote: z.string().optional(),
+  source: z.string().optional(),
 });
 
 export const faqSchema = z.object({
@@ -85,6 +88,17 @@ export const draftSchema = z.object({
    * because, unlike the fixed categories, they can't be looked up from a static map later.
    */
   generatedQuestions: z.array(z.object({ id: z.string(), ask: z.string() })).optional(),
+  /** "maps" = found on Google Maps and confirmed; "manual" = typed screen by screen. */
+  setupMode: z.enum(["maps", "manual"]).optional(),
+  placeId: z.string().optional(),
+  rating: z.number().optional(),
+  reviewCount: z.number().optional(),
+  /**
+   * Answers drafted from the website or reviews that the owner has NOT confirmed yet, keyed
+   * by field path ("profile.bracesCost") -> where it came from. Anything listed here is
+   * excluded from what the assistant may say until the owner taps "Use this" or edits it.
+   */
+  suggested: z.record(z.string(), z.string()).optional(),
 });
 
 export type Draft = z.infer<typeof draftSchema>;
@@ -104,6 +118,6 @@ export function emptyDraft(): Draft {
   return {
     name: "", type: undefined as unknown as BusinessType, otherType: "",
     phone: "", address: "", website: "",
-    hours, staff: [], services: [], policies, faqs: [], profile: {}, generatedQuestions: [],
+    hours, staff: [], services: [], policies, faqs: [], profile: {}, generatedQuestions: [], suggested: {},
   };
 }

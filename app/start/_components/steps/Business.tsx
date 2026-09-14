@@ -15,7 +15,7 @@ import { Ask, Button, Choice, Input, Label, cn } from "../ui";
  * to itself, and the address was asked before the caller had any reason to care. Together
  * they're one scroll, and the two mandatory fields sit side by side where they belong.
  */
-export function Business({ onUseSample }: { onUseSample: () => void }) {
+export function Business({ onUseSample, embedded = false }: { onUseSample?: () => void; embedded?: boolean }) {
   const { control, register, formState: { errors } } = useFormContext<Draft>();
   const type = useWatch({ control, name: "type" });
   const isOther = type === "other";
@@ -38,10 +38,12 @@ export function Business({ onUseSample }: { onUseSample: () => void }) {
 
   return (
     <>
-      <Ask
-        title="First, tell us about your business."
-        hint="Two minutes from here to hearing your own receptionist answer a call."
-      />
+      {!embedded && (
+        <Ask
+          title="First, tell us about your business."
+          hint="Two minutes from here to hearing your own receptionist answer a call."
+        />
+      )}
 
       <div className="mb-7">
         <Label>Business name</Label>
@@ -126,7 +128,7 @@ export function Business({ onUseSample }: { onUseSample: () => void }) {
       </AnimatePresence>
 
       <AnimatePresence initial={false}>
-        {sample && preset && (
+        {!embedded && sample && preset && onUseSample && (
           <motion.div
             key="sample"
             initial={{ opacity: 0, y: 10, height: 0 }}

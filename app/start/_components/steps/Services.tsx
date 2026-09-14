@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Sparkles, Tag, X } from "lucide-react";
 import { uid, type Draft } from "../../_lib/schema";
 import { PRESETS } from "../../_lib/presets";
-import { Ask, InputSm, cn } from "../ui";
+import { Ask, InputSm, Section, cn } from "../ui";
 import { Policies } from "./Policies";
 
 /**
@@ -14,10 +14,14 @@ import { Policies } from "./Policies";
  * what it depends on. Gold rates move daily, tailoring depends on the design, and a service
  * centre cannot quote before it sees the vehicle.
  */
-function PriceField({ index, noun }: { index: number; noun: string }) {
+function PriceField({ index, noun, highlight = false }: { index: number; noun: string; highlight?: boolean }) {
   const { control, register, setValue } = useFormContext<Draft>();
   const note = useWatch({ control, name: `services.${index}.priceNote` });
   const varies = typeof note === "string" && note.length > 0;
+  const name = useWatch({ control, name: `services.${index}.name` });
+  const price = useWatch({ control, name: `services.${index}.price` });
+  // Auto-filled services usually arrive without a price — that is the one gap to point at.
+  const missing = highlight && !varies && !!name?.trim() && !price?.trim();
 
   const toggle = () => {
     if (varies) {
@@ -54,9 +58,9 @@ function PriceField({ index, noun }: { index: number; noun: string }) {
       ) : (
         <InputSm
           {...register(`services.${index}.price`)}
-          placeholder="Price"
+          placeholder={missing ? "Add price" : "Price"}
           inputMode="numeric"
-          className="pl-8 tabular-nums"
+          className={cn("pl-8 tabular-nums", missing && "border-amber-300 bg-amber-50/70")}
           aria-label={`${noun} ${index + 1} price`}
         />
       )}
@@ -64,7 +68,7 @@ function PriceField({ index, noun }: { index: number; noun: string }) {
   );
 }
 
-export function Services() {
+export function Services({ embedded = false }: { embedded?: boolean } = {}) {
   const { control, register, formState: { errors } } = useFormContext<Draft>();
   const type = useWatch({ control, name: "type" });
   const preset = type ? PRESETS[type] : PRESETS.clinic;
@@ -86,10 +90,7 @@ export function Services() {
 
   return (
     <>
-      <Ask
-        title="What do you offer, and what does it cost?"
-        hint="The price you set here is the only price Frontline will ever quote. If a price isn't fixed, tap ₹ to say what it depends on instead."
-      />
+      {embedded ? (<Section title="What do you offer, and what does it cost?" hint="The price you set here is the only price Frontline will ever quote. If a price isn't fixed, tap ₹ to say what it depends on instead." />) : (<Ask title="What do you offer, and what does it cost?" hint="The price you set here is the only price Frontline will ever quote. If a price isn't fixed, tap ₹ to say what it depends on instead." />)}
 
       <div className="space-y-2">
         <AnimatePresence initial={false}>
@@ -109,7 +110,7 @@ export function Services() {
                 className="flex-1"
                 aria-label={`${preset.serviceNoun} ${i + 1} name`}
               />
-              <PriceField index={i} noun={preset.serviceNoun} />
+              <PriceField index={i} noun={preset.serviceNoun} highlight={embedded} />
               <button
                 type="button"
                 onClick={() => remove(i)}

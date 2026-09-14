@@ -1,4 +1,5 @@
 import { record } from "../../_lib/analytics";
+import { visitorCity } from "../../_lib/geo";
 import { planById, gstSplit } from "../../_lib/plans";
 
 export const runtime = "nodejs";
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
     email: (body.email ?? "").trim().slice(0, 120) || null,
     gstin: (body.gstin ?? "").trim().toUpperCase().slice(0, 15) || null,
     note: (body.note ?? "").trim().slice(0, 400) || null,
-    city: req.headers.get("x-vercel-ip-city") ?? null,
+    city: visitorCity(req) ?? null,
     status: "new",
   };
 

@@ -75,7 +75,8 @@ export function buildFactSheet(draft: Draft): FactSheet {
 
   // Category-specific answers — the things this trade's callers always ask.
   questionsFor(draft).forEach((q) => {
-    const a = draft.profile?.[q.id]?.trim();
+    // Drafted but not confirmed by the owner: not a fact yet.
+    const a = draft.suggested?.[`profile.${q.id}`] ? "" : draft.profile?.[q.id]?.trim();
     if (!a) return;
     // Stored as the caller's question plus the owner's own answer, so the model can
     // reuse the owner's wording rather than paraphrasing it.

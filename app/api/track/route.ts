@@ -1,4 +1,5 @@
 import { record, type EventType } from "../../_lib/analytics";
+import { visitorCity } from "../../_lib/geo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
     data: body.data,
     ua: (req.headers.get("user-agent") ?? "").slice(0, 160),
     // City only — enough to tell Coimbatore friends from Chennai ones, without storing an IP.
-    city: req.headers.get("x-vercel-ip-city") ?? undefined,
+    city: visitorCity(req),
   });
 
   return Response.json({ ok: true });
