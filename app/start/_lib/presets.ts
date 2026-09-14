@@ -137,7 +137,8 @@ export const PRESETS: Record<BusinessType, Preset> = {
     // No presets to offer — we genuinely don't know this trade, so we don't pretend to.
     sampleServices: [],
     sampleFaq: { q: "What are your timings?", a: "We're open through the week — call any time during working hours." },
-    policyOrder: ["parking", "card", "wheelchair", "homeCollection", "insurance", "emergency"],
+    // Only what applies to any trade: an AI agency shouldn't be asked about home collection.
+    policyOrder: ["parking", "card"],
   },
   education: {
     label: "Education", icon: GraduationCap, blurb: "Courses, batches, admissions",

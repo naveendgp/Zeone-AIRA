@@ -48,7 +48,7 @@ export function Demo({ draft, who, onEdit }: { draft: Draft; who: string; onEdit
           Meet <em className="font-display font-semibold italic text-brand-hover">{who}.</em>
         </h1>
         <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-ink-dim">
-          {who} knows {knowledgeCount(draft)} things about{" "}
+          {who} knows {knowledgeCount(draft)} {knowledgeCount(draft) === 1 ? "thing" : "things"} about{" "}
           <span className="font-bold text-ink">{draft.name || "your business"}</span> — and nothing else.
           Call or type, and watch where every answer comes from.
         </p>

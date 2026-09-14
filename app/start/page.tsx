@@ -44,17 +44,22 @@ interface Step {
  */
 const MAPS_STEPS: Step[] = [
   { key: "find", autoAdvance: true, wide: true },
-  { key: "found", fields: ["name", "type", "services"], wide: true },
+  { key: "found", fields: ["name", "type"], wide: true },
   { key: "faqs", wide: true, cta: "Create my AI receptionist" },
 ];
 
-/** The typed flow, for businesses not on Google Maps. */
+/**
+ * The typed flow, for businesses not on Google Maps.
+ * Services and questions make the demo sharper but aren't needed to hear it: with no
+ * prices Aira says the team will confirm, with no answers she uses what the business
+ * page already told her.
+ */
 const MANUAL_STEPS: Step[] = [
   { key: "find", autoAdvance: true, wide: true },
   { key: "business", fields: ["name", "type"], wide: true },
   { key: "hours", wide: true },
-  { key: "services", fields: ["services"], wide: true },
-  { key: "faqs", skippable: true, skipLabel: "Skip these questions", wide: true },
+  { key: "services", skippable: true, skipLabel: "Skip for now", wide: true },
+  { key: "faqs", skippable: true, skipLabel: "Skip for now", wide: true },
   { key: "review", wide: true, cta: "Create my AI receptionist" },
 ];
 
@@ -120,6 +125,18 @@ export default function StartPage() {
       if (!ok) return;
     }
     if (isLast) {
+      // Screens open with an empty row to type into; skipped or abandoned rows would make
+      // the whole setup fail validation in the demo, so drop them before it's built.
+      const cur = form.getValues();
+      form.reset(
+        {
+          ...cur,
+          services: (cur.services ?? []).filter((s) => s.name?.trim()),
+          staff: (cur.staff ?? []).filter((s) => s.name?.trim()),
+          faqs: (cur.faqs ?? []).filter((f) => f.q?.trim() && f.a?.trim()),
+        },
+        { keepErrors: true, keepDirty: true, keepTouched: true }
+      );
       track("generated", { draft: form.getValues() });
       setPhase("generating");
       return;
@@ -315,7 +332,13 @@ export default function StartPage() {
 
   return (
     <FormProvider {...form}>
-      <TopProgress current={idx + 1} total={visible.length} onBack={idx > 0 ? back : undefined} />
+      <TopProgress
+        current={idx + 1}
+        total={visible.length}
+        onBack={idx > 0 ? back : undefined}
+        onSkip={meta.skippable ? () => go(idx + 1) : undefined}
+        skipLabel={meta.skipLabel}
+      />
 
       {/* my-auto centres short steps and collapses to zero on tall ones, so nothing
           ever gets clipped above the fold */}

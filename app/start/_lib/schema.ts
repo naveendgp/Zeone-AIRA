@@ -75,7 +75,8 @@ export const draftSchema = z.object({
   website: z.string().optional(),
   hours: z.record(z.enum(DAYS), dayHoursSchema),
   staff: z.array(staffSchema),
-  services: z.array(serviceSchema).min(1, "Add at least one service"),
+  // May be empty: with no prices listed, the assistant says the team will confirm them.
+  services: z.array(serviceSchema),
   policies: z.record(z.enum(POLICY_KEYS), policySchema),
   faqs: z.array(faqSchema),
   /**

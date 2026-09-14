@@ -6,8 +6,8 @@ import { ArrowLeft } from "lucide-react";
 
 /** Hairline bar pinned to the very top — the only chrome the flow gets. */
 export function TopProgress({
-  current, total, onBack,
-}: { current: number; total: number; onBack?: () => void }) {
+  current, total, onBack, onSkip, skipLabel = "Skip",
+}: { current: number; total: number; onBack?: () => void; onSkip?: () => void; skipLabel?: string }) {
   const pct = Math.round((current / total) * 100);
 
   return (
@@ -40,9 +40,21 @@ export function TopProgress({
           </Link>
         )}
 
-        <span className="font-mono text-[11px] tabular-nums text-ink-ghost">
-          {current} / {total}
-        </span>
+        <div className="flex items-center gap-4">
+          {/* optional steps can be left without scrolling to the bottom first */}
+          {onSkip && (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="rounded-full border border-line bg-white/80 px-3.5 py-1.5 text-[13px] font-semibold text-ink-dim backdrop-blur transition-colors hover:border-line-strong hover:text-ink"
+            >
+              {skipLabel}
+            </button>
+          )}
+          <span className="font-mono text-[11px] tabular-nums text-ink-ghost">
+            {current} / {total}
+          </span>
+        </div>
       </div>
     </>
   );

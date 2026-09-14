@@ -28,7 +28,7 @@ export interface FactSheet {
 const money = (price?: string, note?: string) =>
   price?.trim() ? `₹${price.trim()}`
   : note?.trim() ? `no fixed price — ${note.trim()}`
-  : "price not set";
+  : "no fixed price listed — the team confirms it";
 
 export function buildFactSheet(draft: Draft): FactSheet {
   const preset = draft.type ? PRESETS[draft.type] : PRESETS.clinic;
@@ -99,6 +99,9 @@ RULES
 3. Speak like a real front desk on a phone call: warm, one or two short sentences, no lists,
    no markdown. Tamil or English — match whatever the caller used.
 4. Prices are exactly as written above. Never round, discount or estimate.
+   When a service has no fixed price, say only what it depends on, as written. When no price
+   is listed at all, say the team will confirm the price, then offer to book a visit.
+   Never give an approximate figure or a range.
 5. If they want to book, confirm the day and time against the working hours and ask for their name.
 
 REPLY FORMAT — return ONLY this JSON, nothing else:
