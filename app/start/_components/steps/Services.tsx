@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Sparkles, X } from "lucide-react";
@@ -20,24 +20,23 @@ import { Policies } from "./Policies";
 function ServiceRow({ index, noun, highlight, onRemove }: {
   index: number; noun: string; highlight: boolean; onRemove: () => void;
 }) {
-  const { control, register, setValue } = useFormContext<Draft>();
-  const note = useWatch({ control, name: `services.${index}.priceNote` });
+  const { control, register, setValue, getValues } = useFormContext<Draft>();
   const name = useWatch({ control, name: `services.${index}.name` });
   const price = useWatch({ control, name: `services.${index}.price` });
-  // A single space marks "varies" before anything is typed — an empty string is
-  // indistinguishable from the fixed-price mode. Trimmed away before it reaches the agent.
-  const varies = typeof note === "string" && note.length > 0;
+  // The choice is its own state rather than read from the note. A placeholder " " used to
+  // mark "varies" before anything was typed, and that hidden space hid the input's hint.
+  // A varies row left empty behaves like an empty price: callers hear the team will confirm.
+  const [varies, setVaries] = useState(() => !!getValues(`services.${index}.priceNote`)?.trim());
+  const [justSwitched, setJustSwitched] = useState(false);
   // Auto-filled services usually arrive without a price — that is the one gap to point at.
   const missing = highlight && !varies && !!name?.trim() && !price?.trim();
 
   const setMode = (toVaries: boolean) => {
     if (toVaries === varies) return;
-    if (toVaries) {
-      setValue(`services.${index}.priceNote`, " ", { shouldDirty: true });
-      setValue(`services.${index}.price`, "", { shouldDirty: true });
-    } else {
-      setValue(`services.${index}.priceNote`, "", { shouldDirty: true });
-    }
+    setValue(`services.${index}.priceNote`, "", { shouldDirty: true });
+    if (toVaries) setValue(`services.${index}.price`, "", { shouldDirty: true });
+    setVaries(toVaries);
+    setJustSwitched(true);
   };
 
   const option = (active: boolean) =>
@@ -87,13 +86,19 @@ function ServiceRow({ index, noun, highlight, onRemove }: {
       </div>
 
       {varies && (
-        <InputSm
-          {...register(`services.${index}.priceNote`)}
-          autoFocus={!note?.trim()}
-          placeholder="What does it depend on? e.g. the size of the job"
-          className="mt-2"
-          aria-label={`${noun} ${index + 1} — what the price depends on`}
-        />
+        <div className="mt-2">
+          <InputSm
+            {...register(`services.${index}.priceNote`)}
+            autoFocus={justSwitched}
+            placeholder="What does the price depend on?"
+            aria-label={`${noun} ${index + 1} — what the price depends on`}
+            aria-describedby={`service-${index}-varies-hint`}
+          />
+          <p id={`service-${index}-varies-hint`} className="mt-1.5 pl-1 text-[12px] leading-relaxed text-ink-faint">
+            Callers hear this instead of a price — e.g. &ldquo;It depends on how big the job is, we&apos;ll
+            give you an exact quote.&rdquo; Leave it empty and they&apos;re told your team will confirm the price.
+          </p>
+        </div>
       )}
     </div>
   );
